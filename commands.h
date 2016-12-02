@@ -12,7 +12,9 @@ class Commands : public QObject
     Q_OBJECT
 public:
     explicit Commands(int verbose, Moebius *_parent = nullptr);
+    ~Commands();
     void exit(QString nick, QStringList args);
+    void benchmark(QString nick, QStringList args);
 
 private:
     Logger* l;

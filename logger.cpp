@@ -15,10 +15,10 @@ void Logger::log(Log level, QString message)
         break;
     case WARNING:
         if (verbose != 0)
-            qDebug() << qPrintable(QString("[%1] %2: %3").arg(tr("WARN"), parent, message));
+            qWarning() << qPrintable(QString("[%1] %2: %3").arg(tr("WARN"), parent, message));
         break;
     case ERROR:
-        qDebug() <<  qPrintable(QString("[%1] %2: %3").arg(tr("ERROR"), parent, message));
+        qCritical() <<  qPrintable(QString("[%1] %2: %3").arg(tr("ERROR"), parent, message));
         break;
     case INIT:
         qDebug() << qPrintable(message);

@@ -5,7 +5,6 @@ Moebius::Moebius(QCoreApplication* _parent) : IrcConnection(_parent)
     qsrand(QTime::currentTime().msec());
 
     l = new Logger(0, this);
-    l->log(INIT, tr("Initializing"));
 
     l->log(INIT, tr("Loading ini files"));
 
@@ -22,6 +21,13 @@ Moebius::Moebius(QCoreApplication* _parent) : IrcConnection(_parent)
         qputenv("IRC_DEBUG", "1");
     l->setLevel(verbose);
     l->log(INIT, tr("Verbose level set to %1").arg(QString::number(verbose)));
+
+    cmds = new Commands(verbose, this);
+    commands = new QHash<QString,fp>;
+    commands->insert("exit", &Commands::exit);
+    commands->insert("benchmark", &Commands::benchmark);
+
+    reader = new Reader(verbose, this);
 
     trigger = settings->value("trigger", "!").toString();
     setHost(settings->value("server", "irc.freenode.net").toString());
@@ -46,10 +52,6 @@ Moebius::Moebius(QCoreApplication* _parent) : IrcConnection(_parent)
     QVariantMap ctcp;
     ctcp.insert("VERSION", "Moebius alpha build");
     setCtcpReplies(ctcp);
-
-    cmds = new Commands(verbose, this);
-    commands = new QHash<QString,fp>;
-    commands->insert("exit", &Commands::exit);
 
     QObject::connect(this, SIGNAL(secureError()), this, SLOT(onSSLError()));
     QObject::connect(this, SIGNAL(connected()), this, SLOT(onConnect()));
@@ -79,10 +81,10 @@ Moebius::~Moebius()
     }
 
     accesslist->sync();
-    delete l;
     delete commands;
     delete settings;
     delete accesslist;
+    delete l;
 }
 
 void Moebius::onSSLError()
@@ -212,7 +214,32 @@ void Moebius::command(QString nick, QString cmd, QStringList args)
         sendCommand(IrcCommand::createNotice(nick, tr("This command does not exist")));
 }
 
-QSettings* Moebius::getAccessList()
+void Moebius::addAccess(QString nick)
 {
-    return accesslist;
+    accesslist->setValue(nick, "");
+}
+
+void Moebius::remAccess(QString nick)
+{
+    accesslist->remove(nick);
+}
+
+bool Moebius::inAccessList(QString nick)
+{
+    return accesslist->contains(nick);
+}
+
+Reader* Moebius::getReader()
+{
+    return reader;
+}
+
+void Moebius::sendMessage(QString dest, QString message)
+{
+    sendCommand(IrcCommand::createMessage(dest, message));
+}
+
+QString Moebius::getChan()
+{
+    return chan;
 }
