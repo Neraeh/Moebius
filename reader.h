@@ -19,6 +19,7 @@ public:
     ~Reader();
     bool load(QString file);
     Story getLoadedStory();
+    bool isLoaded();
 
 private:
     Logger* l;

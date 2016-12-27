@@ -29,3 +29,8 @@ void Logger::setLevel(int level)
 {
     verbose = level;
 }
+
+int Logger::getLevel()
+{
+    return verbose;
+}

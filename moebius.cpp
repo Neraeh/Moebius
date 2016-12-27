@@ -25,7 +25,9 @@ Moebius::Moebius(QCoreApplication* _parent) : IrcConnection(_parent)
     cmds = new Commands(verbose, this);
     commands = new QHash<QString,fp>;
     commands->insert("exit", &Commands::exit);
-    commands->insert("benchmark", &Commands::benchmark);
+    commands->insert("load", &Commands::load);
+    commands->insert("launch", &Commands::launch);
+    commands->insert("download", &Commands::download);
 
     reader = new Reader(verbose, this);
 
@@ -82,9 +84,15 @@ Moebius::~Moebius()
 
     accesslist->sync();
     delete commands;
+    delete reader;
     delete settings;
     delete accesslist;
     delete l;
+}
+
+QString Moebius::getRepoUrl()
+{
+    return "http://37.59.40.155/moebius/storys/";
 }
 
 void Moebius::onSSLError()
@@ -126,27 +134,34 @@ void Moebius::onIrcMessage(IrcMessage *message)
     case 403:
         l->log(ERROR, tr("Channel %1 does not exist, exiting").arg(chan));
         qApp->exit(403);
+        break;
     case 404:
         l->log(ERROR, tr("Cannot send message to %1").arg(chan));
         break;
     case 431:
         l->log(ERROR, tr("%1 said nickname is empty, exiting").arg(host()));
         qApp->exit(431);
+        break;
     case 432:
         l->log(ERROR, tr("Erroneous nickname, exiting"));
         qApp->exit(432);
+        break;
     case 433:
         l->log(ERROR, tr("%1 is already in use, exiting").arg(nickName()));
         qApp->exit(433);
+        break;
     case 436:
         l->log(ERROR, tr("Nickname collision, exiting"));
         qApp->exit(436);
+        break;
     case 471:
         l->log(ERROR, tr("%1 is full, exiting").arg(chan));
         qApp->exit(471);
+        break;
     case 473:
         l->log(ERROR, tr("Invite only chans are not yet supported, exiting"));
         qApp->exit(473);
+        break;
     }
 }
 
@@ -159,6 +174,9 @@ void Moebius::onMessage(IrcPrivateMessage* message)
         QString cmd = QString(args.first()).mid(1);
         args.removeFirst();
         command(message->nick(), cmd, args);
+    }
+    else if (inGame) {
+
     }
 }
 
@@ -206,6 +224,16 @@ void Moebius::onQuit(IrcQuitMessage* message)
     Q_UNUSED(message);
 }
 
+void Moebius::onDowloaded(QString name)
+{
+    sendMessage(tr("%1 successfully downloaded").arg(name));
+}
+
+void Moebius::onDownloadError(QString file, QString error)
+{
+    sendMessage(chan, tr("Unable to download %1: %2").arg(file).arg(error));
+}
+
 void Moebius::command(QString nick, QString cmd, QStringList args)
 {
     if (commands->contains(cmd))
@@ -234,6 +262,11 @@ Reader* Moebius::getReader()
     return reader;
 }
 
+void Moebius::sendMessage(QString message)
+{
+    sendMessage(chan, message);
+}
+
 void Moebius::sendMessage(QString dest, QString message)
 {
     sendCommand(IrcCommand::createMessage(dest, message));
@@ -242,4 +275,9 @@ void Moebius::sendMessage(QString dest, QString message)
 QString Moebius::getChan()
 {
     return chan;
+}
+
+void Moebius::setInGame(bool value)
+{
+    inGame = value;
 }

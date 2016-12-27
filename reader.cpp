@@ -142,3 +142,8 @@ Story Reader::getLoadedStory()
 {
     return *story;
 }
+
+bool Reader::isLoaded()
+{
+    return story != nullptr;
+}

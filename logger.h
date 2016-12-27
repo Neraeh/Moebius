@@ -20,6 +20,7 @@ public:
 
     void log(Log level, QString message);
     void setLevel(int level);
+    int getLevel();
 
 private:
     int verbose;
